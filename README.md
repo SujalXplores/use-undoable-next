@@ -9,19 +9,19 @@ Integrating with React Flow v10? [Read this.](#integration-with-react-flow-v10)
 ## Installation
 
 ```bash
-yarn add use-undoable
+yarn add use-undoable-next
 ```
 
 or
 
 ```bash
-npm install use-undoable
+npm install use-undoable-next
 ```
 
 ## Basic Usage
 
 ```js
-import useUndoable from "use-undoable"
+import useUndoable from "use-undoable-next"
 
 const MyComponent = () => {
   const initialState = 0

@@ -1,36 +1,41 @@
 {
-  "name": "use-undoable",
+  "name": "use-undoable-next",
   "version": "5.0.0",
   "description": "React hook for undo/redo functionality without the hassle.",
   "private": false,
-  "author": "Tristan Brewster <tristan@infi.im>",
+  "author": "sujalxplores <shahc9437@gmail.com>",
   "license": "MIT",
-  "repository": "https://github.com/xplato/useUndoable",
+  "repository": "https://github.com/sujalxplores/useUndoable",
   "main": "dist/index.js",
-  "module": "dist/index.modern.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "source": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    }
+  },
   "engines": {
-    "node": ">=10"
+    "node": ">=18"
   },
   "scripts": {
-    "build": "microbundle-crl --no-compress --format modern,cjs",
-    "start": "microbundle-crl watch --no-compress --format modern,cjs",
-    "prepare": "run-s build"
+    "build": "tsup",
+    "start": "tsup --watch",
+    "prepare": "tsup"
   },
   "peerDependencies": {
-    "react": "17 || 18"
+    "react": ">=17.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.12.38",
-    "@types/react": "^16.9.27",
-    "@types/react-dom": "^16.9.7",
-    "cross-env": "^7.0.2",
-    "microbundle-crl": "^0.13.10",
-    "npm-run-all": "^4.1.5",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-scripts": "^3.4.1",
-    "typescript": "^3.7.5"
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3"
   },
   "files": [
     "dist"
