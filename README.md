@@ -1,452 +1,400 @@
-# useUndoable
+<div align="center">
 
-React Hook adding undo/redo functionality to `useState` with a hassle-free API and customizable behavior.
+# use-undoable-next
 
-[**See the Live Demo**](https://codesandbox.io/s/use-undoable-zi0b4)
+### Undo/redo for React, without the hassle.
 
-Integrating with React Flow v10? [Read this.](#integration-with-react-flow-v10)
+[![npm version](https://img.shields.io/npm/v/use-undoable-next.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/use-undoable-next)
+[![npm downloads](https://img.shields.io/npm/dm/use-undoable-next.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/use-undoable-next)
+[![license](https://img.shields.io/npm/l/use-undoable-next.svg?style=flat-square&color=blue)](./LICENSE)
+[![react](https://img.shields.io/npm/peerdependency/react/use-undoable-next.svg?style=flat-square&label=react)](https://react.dev)
+[![types](https://img.shields.io/npm/types/use-undoable-next.svg?style=flat-square&label=types)](https://www.typescriptlang.org)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/use-undoable-next?style=flat-square&label=size)](https://bundlephobia.com/package/use-undoable-next)
+
+A React hook that adds undo/redo functionality to `useState` with a familiar API,
+customizable mutation behaviors, and zero dependencies.
+
+**Topics:** `react` · `react-hook` · `undo` · `redo` · `history` · `state-management` · `typescript`
+
+</div>
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Familiar API** | Mirrors `useState`; drop-in replacement with undo/redo support |
+| **4 mutation behaviors** | `mergePastReversed`, `mergePast`, `destroyFuture`, `keepFuture` |
+| **Per-call overrides** | Change behavior on-the-fly for individual `setState` calls |
+| **History limit** | Cap memory usage with a configurable `historyLimit` |
+| **Functional updaters** | `setState(prev => prev + 1)` works just like `useState` |
+| **Zero dependencies** | No bloat; tiny footprint, ships as ESM + CJS |
+| **TypeScript native** | Full type safety with generic state inference |
+
+---
 
 ## Installation
-
-```bash
-yarn add use-undoable-next
-```
-
-or
 
 ```bash
 npm install use-undoable-next
 ```
 
-## Basic Usage
+```bash
+yarn add use-undoable-next
+```
 
-```js
+```bash
+pnpm add use-undoable-next
+```
+
+---
+
+## Quick Start
+
+```tsx
 import useUndoable from "use-undoable-next"
 
-const MyComponent = () => {
-  const initialState = 0
-
-  const [count, setCount, { undo, redo }] = useUndoable(initialState)
+function Counter() {
+  const [count, setCount, { undo, redo, canUndo, canRedo }] = useUndoable(0)
 
   return (
-    <>
+    <div>
       <p>{count}</p>
-      <button onClick={undo}>undo</button>
-    </>
+      <button onClick={() => setCount(c => c + 1)}>+</button>
+      <button onClick={() => setCount(c => c - 1)}>−</button>
+      <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
+      <button onClick={redo} disabled={!canRedo}>↷ Redo</button>
+    </div>
   )
 }
 ```
 
-## Features
+---
 
-(and how `useUndoable` improves on existing packages)
+## How It Works
 
--   Familiar API similar to `useState`
--   You can choose how you'd like state changes to be reflected, with `mergePastReversed`, `mergePast`, `destroyFuture`, or `keepFuture`
--   Ability to set default options so that each call to `setState` doesn't need to pass the same mutation behavior.
--   Set a history limit to prevent huge memory consumption.
--   Zero dependencies
--   Tiny; less than 40 kB unpacked
+`useUndoable` maintains three pieces of state internally: a **past** stack, the
+**present** value, and a **future** stack. Every `setState` pushes the current
+value into `past`. Calling `undo` moves the present into `future` and pops the
+last item from `past` into `present`. `redo` does the reverse.
 
-## Why?
+```mermaid
+---
+title: Undo/Redo State Flow
+---
+stateDiagram-v2
+    [*] --> Idle
 
-There are existing packages that provide undo/redo functionality for React. So why, then, does this project exist? **To fill the gaps they don't.**
+    Idle --> SetState: setState(value)
+    SetState --> Idle: push present → past\nset present = value\nclear future (per behavior)
 
-As explained in this README, most undo/redo packages default to the `destroyFuture` behavior. I don't think this is a good approach. There's a problem: after undoing some change and then making another change on that branch, the previous state changes are destroyed.
+    Idle --> Undo: undo()
+    Undo --> Idle: pop past → present\npush old present → future
 
-The problem with many existing projects that I've found is that they implicitly force a certain behavior. If you don't like the `future` being destroyed, you either have to implement your own solution or deal with it.
-
-Or, as evidenced by the fact that you're reading this, you use useUndoable. This project excels in subjectivity. That is, the behavior of the state can be adjusted at your discretion, and on-the-fly. **No longer do we have this lock-in behavior that dictates how users use your application.**
-
-If you like what you're reading, continue on below to learn how to use it.
-
-## Documentation
-
-useUndoable is one of those projects that doesn't have a massive layer of abstraction. In comparison to a project like, say, React, _how_ you use the program greatly differs from how it is built.
-
-This project is slightly different. Instead of just going through the API in a superficial way, I will actually teach you, more or less, how useUndoable works under-the-hood. You see, this project is, in a general sense, quite simple. It is imperative, however, that you have a deeper understanding of how it works. Having this understanding will allow you to make better decisions about the options and behaviors this package offers.
-
-This README is the entire documentation. It is written such that you are meant to read it from top to bottom, without skipping around.
-
-The best way to visualize how the useUndoable state system works is to use the [live demo](https://codesandbox.io/s/use-undoable-zi0b4) as a companion to this README. Simply open it up and make the state there match the examples offered below.
-
-Let's start by going into the API of the hook. Afterwards, we'll move into the options and behavior.
-
-### The API
-
-The API is rather straightforward. You start by initializing the state, giving it a name and naming the updater function. Then, you simply initialize the `undo` and `redo` functions in an object.
-
-### State
-
-```js
-const [yourState, setYourState, { undo, redo }] = useUndoable(initialState)
+    Idle --> Redo: redo()
+    Redo --> Idle: pop future → present\npush old present → past
 ```
 
-Notice how the left-two variables look similar to the `useState` API:
+### Visual walkthrough
 
-```js
-const [yourState, setYourState] = useState(initialState)
+Starting state:
+
+```
+{ past: [],              present: 0,    future: [] }
 ```
 
-This is an intentional choice. You see, useUndoable is designed to mimick this behavior—both in looks and functionality.
+After `setState(1)` → `setState(2)`:
 
-One primary thing to note is that the updater function (`setYourState`) accepts both a direct value **and** a so-called "functional updater," just like `useState`. The functional updater is given the current state as a parameter.
-
-That is, both of these are valid:
-
-```js
-setYourState(yourState + 1)
+```
+{ past: [0, 1],          present: 2,    future: [] }
 ```
 
-```js
-setYourState(currentState => currentState + 1)
+After `undo()`:
+
+```
+{ past: [0],             present: 1,    future: [2] }
 ```
 
-The `setState` function accepts, in total, 3 parameters:
+After `undo()` again:
 
--   The state you want to set or a function to set it
--   The mutation behavior of this one `setState` call (optional)
--   The `ignoreAction` boolean (optional)
-
-The mutation behavior is described below. Normally, the mutation behavior is a global value, but you can alter it within individual state updates if you want.
-
-The `ignoreAction` boolean indicates whether or not to update the `past` and `future` of useUndoable's internal state. Essentially, if you set this to `true`, when you make a state update with `setState(c + 1)`, it will **only** update the **present** state. In other words, it will act like the normal `useState` hook.
-
-If you want to use the global mutation behavior and set the `ignoreAction` bool, set mutation behavior to `null`:
-
-```js
-const [yourState, setYourState, { undo, redo }] = useUndoable()
-
-setYourState(yourState + 1, null, true)
+```
+{ past: [],              present: 0,    future: [1, 2] }
 ```
 
-Heads up: Are you pulling data from an API? Stick around to read how to handle that properly with useUndoable.
+After `redo()`:
 
-### Undoing and Redoing changes
-
-Let's take a moment and look at what the internal state of useUndoable looks like:
-
-```js
-{
-    past: [0, 1, 2],
-    present: 3,
-    future: []
-}
 ```
-
-When you make a state update with `setYourState`, the `present` value is passed into the `past` array.
-
-Let's take the above object and call `undo()` on it. The resulting state would look like:
-
-```js
-{
-    past: [0, 1],
-    present: 2,
-    future: [3]
-}
+{ past: [0],             present: 1,    future: [2] }
 ```
-
-and, by extension, the `redo()` function will do the opposite of this, making the object go back to the initial example.
-
-Simply call `undo` and `redo` whenever you'd like, and those changes will be reflected in the state and your component will re-render with the new data.
 
 ---
 
-That covers most of the API you'll be working with. There are, however, some lesser-used API values that are explained after the Options & Behavior section below.
+## API Reference
 
-### Options & Behavior
+### Hook signature
 
-#### Options
+```ts
+function useUndoable<T>(
+  initialPresent: T,
+  options?: Options
+): UseUndoable<T>
+```
 
-The `useUndoable` hook accepts two parameters: `initialState` and `options`. The latter is not required, and the default options will be specified later.
+### Return value
 
-The `options` object looks like this:
+The hook returns a tuple `[state, setState, helpers]`:
+
+| Element | Type | Description |
+|---------|------|-------------|
+| `state` | `T` | The current (present) state value |
+| `setState` | `(value \| updater, behavior?, ignoreAction?) => void` | Updater; accepts a value or functional updater, like `useState` |
+| `helpers.past` | `T[]` | Array of past state values |
+| `helpers.future` | `T[]` | Array of future (redo-able) state values |
+| `helpers.undo` | `() => void` | Move one step back in history |
+| `helpers.redo` | `() => void` | Move one step forward in history |
+| `helpers.canUndo` | `boolean` | Whether undo is available |
+| `helpers.canRedo` | `boolean` | Whether redo is available |
+| `helpers.reset` | `(newState?) => void` | Wipe history and reset present (defaults to `initialState`) |
+| `helpers.resetInitialState` | `(newInitial: T) => void` | Replace the first item in `past`; useful for async data |
+| `helpers.static_setState` | `(value, behavior?, ignoreAction?) => void` | Stable setter that never changes identity (value only, no functional updater) |
+
+### `setState` parameters
+
+```ts
+setState(
+  payload: T | ((prev: T) => T),  // new value or functional updater
+  behavior?: MutationBehavior,     // override for this call only
+  ignoreAction?: boolean           // if true, skip history tracking
+)
+```
+
+> **Tip:** To use the global behavior but set `ignoreAction`, pass `null` as the
+> second argument: `setState(value, null, true)`
+
+---
+
+## Options
 
 ```ts
 interface Options {
-  behavior?:
-    | "mergePastReversed"
-    | "mergePast"
-    | "destroyFuture"
-    | "keepFuture"
+  behavior?: MutationBehavior
   historyLimit?: number | "infinium" | "infinity"
   ignoreIdenticalMutations?: boolean
   cloneState?: boolean
 }
 ```
 
-The `historyLimit` is a number that limits the amount of items in the `past` array. This is particularly useful when your state is relatively large.
+| Option | Default | Description |
+|--------|---------|-------------|
+| `behavior` | `"mergePastReversed"` | How history is treated after a state change following an `undo` |
+| `historyLimit` | `100` | Max items in the `past` array. Use `"infinium"` or `"infinity"` for unlimited |
+| `ignoreIdenticalMutations` | `true` | Skip recording a state change if the new value equals the current value |
+| `cloneState` | `false` | Return a shallow clone instead of the same reference (helps trigger re-renders) |
 
-The default is `100` items.
+---
 
-`ignoreIdenticalMutations` and `cloneState` are related. If you don't change `ignoreIdenticalMutations`, you don't need to worry about the other.
+## Mutation Behaviors
 
-Essentially, there are some specific cases where you actually _do_ need useUndoable to allow identical mutations (where you update the state with a value it already has). These cases are rare, but enough exist to warrant this specific option.
+The **behavior** determines what happens to the `future` array when you make a
+new state change *after* having called `undo`. This is the killer feature:
+you're not locked into one strategy.
 
-In short, if you find useUndoable acting weird, try changing this option and see if it helps.
+Starting point for all examples:
 
-If you do end up using this option, you have access to the `cloneState` option (default `false`) which just determines whether or not to return the existing state or a cloned version (this can help with triggering re-renders).
+```
+{ past: [],  present: 0,  future: [1, 2] }
+```
 
-#### Behavior
+Now we call `setState(5)`:
 
-You can customize the behavior of undo/redo actions by specifying one of the following: `mergePastReversed`, `mergePast`, `destroyFuture`, or `keepFuture`
+### `destroyFuture`: discard the future
 
-To describe these, let's go through an example.
+```mermaid
+flowchart LR
+    A["past: []<br/>present: 0<br/>future: [1, 2]"] -->|setState 5| B["past: [0]<br/>present: 5<br/>future: []"]
+    style B fill:#ffcccc,stroke:#cc0000
+```
 
-Assume we start with the following state object:
+The future is erased. Values `1` and `2` are gone; the user can't get back to them.
 
-```js
-{
-    past: [],
-    present: 0,
-    future: []
+### `mergePastReversed` *(default)*: merge future into past (reversed)
+
+```mermaid
+flowchart LR
+    A["past: []<br/>present: 0<br/>future: [1, 2]"] -->|setState 5| B["past: [0, 2, 1]<br/>present: 5<br/>future: []"]
+    style B fill:#ccffcc,stroke:#00aa00
+```
+
+The future is reversed and appended to the past. Every state remains reachable via `undo`.
+
+### `mergePast`: merge future into past (as-is)
+
+```mermaid
+flowchart LR
+    A["past: []<br/>present: 0<br/>future: [1, 2]"] -->|setState 5| B["past: [0, 1, 2]<br/>present: 5<br/>future: []"]
+    style B fill:#ccffcc,stroke:#00aa00
+```
+
+Same as above, but the future is appended in its original order.
+
+### `keepFuture`: leave the future untouched
+
+```mermaid
+flowchart LR
+    A["past: []<br/>present: 0<br/>future: [1, 2]"] -->|setState 5| B["past: [0]<br/>present: 5<br/>future: [1, 2]"]
+    style B fill:#cce5ff,stroke:#0066cc
+```
+
+The future stays in place. Both `undo` and `redo` remain available.
+
+### Behavior comparison
+
+| Behavior | Future after `setState` | All states reachable? | Use case |
+|----------|------------------------|----------------------|----------|
+| `destroyFuture` | `[]` | No | Git-style (branch is discarded) |
+| `mergePastReversed` | `[]` | Yes | Intuitive undo-then-edit (default) |
+| `mergePast` | `[]` | Yes | Same, but preserves future order |
+| `keepFuture` | unchanged | Yes | Non-destructive, keeps redo available |
+
+---
+
+## Handling Async Data (`resetInitialState`)
+
+When fetching data from an API, your `initialState` might start as `[]` or
+`undefined`. Without `resetInitialState`, users could `undo` all the way back to
+that empty state.
+
+```tsx
+function TodoList() {
+  const [todos, setTodos, { undo, redo, resetInitialState }] = useUndoable([])
+
+  useEffect(() => {
+    fetchTodos().then(apiTodos => {
+      setTodos(apiTodos)
+      resetInitialState(apiTodos) // ← prevents undo back to []
+    })
+  }, [])
+
+  return /* ... */
 }
 ```
 
-Let's call `setYourState(s => s + 1)` twice. This leaves us with:
+> **Important:** Call `resetInitialState` only once. Calling it multiple times
+> on an existing state risks overwriting legitimate history entries.
 
-```js
-{
-    past: [0, 1],
-    present: 2,
-    future: []
-}
+---
+
+## `static_setState`
+
+The default `setState` changes identity on every state update because it supports
+functional updaters (which close over `present`). If this causes issues with
+memoized children or effect dependencies, use `static_setState`:
+
+```tsx
+const [count, setCount, { static_setState }] = useUndoable(0)
+
+// static_setState accepts a value only (no functional updater)
+// its identity never changes across renders
+static_setState(42)
 ```
 
-Let us now call `undo()` twice. We are left with:
+---
 
-```js
-{
-    past: [],
-    present: 0,
-    future: [1, 2]
-}
-```
+## Renaming Destructured Values
 
-Great. This is the starting point for the behavior.
+Since the third element is an object, you can rename anything:
 
-Calling `undo()` essentially creates a new branch of state changes. The `behavior` specifies how to recover from _after_ a state change that followed an `undo()`.
-
-The `destroyFuture` option, like I explained briefly above, is the most common behavior that I have seen. It essentially just discards the `future` if you make a state change after an undo.
-
-Let's go back to this state:
-
-```js
-{
-    past: [],
-    present: 0,
-    future: [1, 2]
-}
-```
-
-If we call `setYourState(s => s + 1)` now, it would erase the future. The resulting state would look like:
-
-```js
-{
-    past: [0],
-    present: 1,
-    future: []
-}
-```
-
-This, as I explained, is potentially unexpected behavior. The state values `1` and `2` have been erased! The user can't go back.
-
-This option is provided just in case it fits your use case, but there are three more to discuss.
-
-The `mergePastReversed` and `mergePast` options are the most common, and ones that users probably expect.
-
-What they do is simply merge the `future` into the `past`, meaning that every single state change can be navigated back to. The only difference between these two, as indicated by the name, is how the future looks after being merged.
-
-`mergePastReversed`, understandably, reverses the `future` before merging it into the `past`.
-
-The other option is the `keepFuture` option, which simply does not touch the `future` array.
-
-Therefore, contrary to the `destroyFuture` option, the resulting object would look like:
-
-```js
-{
-    past: [0],
-    present: 1,
-    future: [1, 2]
-}
-```
-
-### Other values
-
-The hook exports a few other values that are useful in certain scenarios. Let's call the hook and set all of the values it provides:
-
-```js
-const [
-  state,
-  setState,
-
-  {
-    past,
-    future,
-
-    undo,
-    canUndo,
-    redo,
-    canRedo,
-    reset,
-    static_setState,
-  },
-] = useUndoable(initialState, options)
-```
-
-`canUndo` and `canRedo` are just booleans indicating whether or not you can technically undo or redo any state changes.
-
-`reset` is a function allowing you to erase the entire state and start the `present` off with a value. If you don't pass a value, it will default to `initialState`.
-
-### `resetInitialState` (handling `async`)
-
-If you're dynamically updating the state from an async function or accepting data via an HTTP request, your `initialState` may begin as an empty or `undefined` object. `resetInitialState` will allow you to prevent the `undo` function from going back to that `undefined` object.
-
-Imagine you're pulling an array of todo items from your API. Initially, you set the `initialState` as an empty array (`[]`). If users can drag items around to change the order and then undo their change, they would, previously, be able to undo all the way back to that empty array.
-
-`resetInitialState` allows you to replace the first item (index `0`) of the `past` array to anything you want, potentially preventing your users from undoing to nothingness. Consider the following code:
-
-```js
-const MyComponent = () => {
-    const [
-        todos,
-        setTodos,
-        {
-            undo,
-            redo
-        }
-    ] = useUndoable([]);
-
-    useEffect(() => {
-        // query your API and set the todos
-        setTodos(api.queryForTodos());
-    }, []);
-
-    return (
-        // ...
-    );
-};
-```
-
-With this setup, your users can undo back to that empty array defined here: `useUndoable([])`
-
-Let's fix this so that the user can only undo back to the array sent from the API:
-
-```js
-const MyComponent = () => {
-    const [
-        todos,
-        setTodos,
-        {
-            undo,
-            redo,
-            resetInitialState
-        }
-    ] = useUndoable([]);
-
-    useEffect(() => {
-        // query your API and set the todos
-        const apiTodos = api.queryForTodos();
-
-        setTodos(apiTodos);
-        resetInitialState(apiTodos);
-    }, []);
-
-    return (
-        // ...
-    );
-};
-```
-
-Note: it is important that this function is only called once. If you call it multiple times with an existing state, you run the risk of accidentally deleteing _legitimate_ state values and replacing it with some generic (or "starting") one.
-
-One more note: This function **does not** reset the _actual_ state you passed into the hook itself (`useUndoable([])`); it only changes the item at index `0` in the `past` array.
-
-### `static_setState`
-
-In some rare cases, you may run into the issue that the default `setState` function changes with every state change. This is, more or less, by design.
-
-One key behavior of the default `setState` is that you can pass either a value or a function. The function receives the present state as a parameter. As such, the function itself needs to change whenever the present state changes.
-
-If you have an issue with this, you can use the `static_setState` function. This **does not** accept a function, only a new value. This means it only needs to be created once.
-
-## Performance considerations
-
-Every time you make a state change, the previous state is saved in memory (and the previous one, and the previous one, ...). Because of this, **you** need to think carefully about how you want to store your state, how many changes in the past you want to keep, and so on.
-
-In general, you want to ask yourself the following:
-
--   How can I reduce the size of my state object while still keeping it usable?
--   How many actions in the past is reasonable for my project to store? (See `historyLimit`)
--   Should each "state" be a description of how to mutate some static object, or should it be the state object in itself?
-
-On that last point: consider that your state is a large array of objects with many properties. Instead of storing the entire state, you could store descriptions of how the state was modified. For instance: `item at index 5 -> change 'name' property to value 'infinium'`. This way, your state changes are more efficient and use less memory than storing the entire array of objects.
-
-In general, you probably won't have to worry too much about performance. If you're using very large data sets, however, we urge you to consider the above.
-
-If you spot an area where performance can be improved within our source code, please create an issue to let us know (or a pull request!).
-
-## Changing function/variable names
-
-Since the third value returned from the `useUndoable` hook is an object, you can change the names of the values like so:
-
-```js
+```tsx
 const [
   count,
   setCount,
   {
-    past: currentPast,
-    future: currentFuture,
-
-    undo: undoWithCustomName,
-    canUndo: canUndoWithCustomName,
-    redo: redoWithCustomName,
-    canRedo: canRedoWithCustomName,
-    reset: deleteItAll,
+    past: history,
+    future: upcoming,
+    undo: stepBack,
+    redo: stepForward,
+    canUndo: hasHistory,
+    reset: wipe,
   },
-] = useUndoable([
-  {
-    count: 1,
-  },
-])
+] = useUndoable(0)
+```
 
-deleteItAll({
-  state: "My new state",
+---
+
+## Performance
+
+Every state change stores the previous state in memory. For large state objects,
+consider:
+
+1. **Use `historyLimit`** to cap the number of stored past states
+2. **Store diffs, not snapshots**; instead of storing the full array, store
+   mutation descriptions like `{ index: 5, field: "name", value: "infinium" }`
+3. **Use `ignoreIdenticalMutations`** to avoid polluting history with no-op updates
+
+```tsx
+// Limit history to 50 entries
+const [state, setState] = useUndoable(initialState, {
+  historyLimit: 50,
 })
 ```
 
-And, of course, you can set `count, setCount` to anything you want by default, since they are array items.
+---
 
 ## Integration with React Flow v10
 
-React Flow v10 added new (and much better) ways to manage the internal state of the `ReactFlow` component. Most notably, the state of nodes and edges have been separated. When you try to integrate useUndoable with v10 as their documentation suggestions, you'll run into some weird issues with re-renders and state updates.
+React Flow v10 separates node and edge state. To integrate with `useUndoable`,
+make it the **exclusive** state manager for both; don't let React Flow's
+internal state fight with the hook.
 
-The primary cause for most of these issues is that **you are trying to manage multiple state instances at once.** In effect, useUndoable may try to overwrite React Flow's state and vice/versa.
+> **Note:** Dragging a node fires many `onDrag` events, each counted as a
+> separate history entry. You may want to debounce or batch these.
 
-The solution to this problem is very simple: make useUndoable the **exclusive** state manager for nodes and edges.
+See [`react-flow-example/src/App.jsx`](./react-flow-example/src/App.jsx) for a
+working integration.
 
-This way, nothing will be arbitrarily overwritten, and it will work as expected.
-
-See the updated `react-flow-example/src/App.jsx` file for ways to work with React Flow v10.
-
-The `react-flow-example` does do something "unexpected:" moving a node counts as a **series** of state updates. This means that useUndoable **will count each drag event as individual pieces of history.**
-
-For instance:
-
--   You have Node A with position 0, 0
--   You move Node A to position 100, 100
-
-This is not one state update in React Flow v10. Instead, a `drag` event is fired for, more or less, every unit you move: 0 -> 1 -> 2 -> 3 -> and so on.
-
-This is not a flaw with useUndoable itself, because those state changes are legitimate. Therefore, it is up to you and your project to determine the best way to track React Flow's state changes.
+---
 
 ## Contributing
 
-1. Clone repo and install dependencies for the main project with: `yarn install`
-2. Navigate into the example and do the same.
-3. In the root directory, run `yarn start`
-4. In the example directory, run `yarn start`
+```bash
+# Clone and install
+git clone https://github.com/sujalxplores/useUndoable.git
+cd useUndoable
+pnpm install
+
+# Build the library (runs automatically on install via prepare)
+pnpm build
+
+# Run the demo
+cd demo && pnpm install && pnpm start
+```
+
+---
+
+## GitHub Repository Setup
+
+Set the repo description and topics (run once):
+
+```bash
+# Repository description
+gh repo edit sujalxplores/useUndoable \
+  --description "React hook for undo/redo functionality with customizable mutation behaviors and zero dependencies."
+
+# Topics for discoverability
+gh repo edit sujalxplores/useUndoable \
+  --add-topic react \
+  --add-topic react-hook \
+  --add-topic undo \
+  --add-topic redo \
+  --add-topic history \
+  --add-topic state-management \
+  --add-topic typescript \
+  --add-topic react19
+```
+
+---
 
 ## License
 
-This project is licensed under the terms of the MIT license. See the `LICENSE` file.
+[MIT](./LICENSE) © [sujalxplores](https://github.com/sujalxplores)

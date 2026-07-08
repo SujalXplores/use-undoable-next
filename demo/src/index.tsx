@@ -4,12 +4,11 @@ import App from './App';
 
 import './jupiterui.css';
 
-const root = ReactDOM.createRoot(
-	document.getElementById('root') as HTMLElement
-);
+const element = document.getElementById('root') as HTMLElement;
+const root = ReactDOM.createRoot(element);
 
 root.render(
-	<React.StrictMode>
-		<App />
-	</React.StrictMode>
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
 );
