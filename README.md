@@ -359,8 +359,8 @@ working integration.
 
 ```bash
 # Clone and install
-git clone https://github.com/sujalxplores/useUndoable.git
-cd useUndoable
+git clone https://github.com/SujalXplores/use-undoable-next.git
+cd use-undoable-next
 pnpm install
 
 # Build the library (runs automatically on install via prepare)
@@ -372,29 +372,6 @@ cd demo && pnpm install && pnpm start
 
 ---
 
-## GitHub Repository Setup
-
-Set the repo description and topics (run once):
-
-```bash
-# Repository description
-gh repo edit sujalxplores/useUndoable \
-  --description "React hook for undo/redo functionality with customizable mutation behaviors and zero dependencies."
-
-# Topics for discoverability
-gh repo edit sujalxplores/useUndoable \
-  --add-topic react \
-  --add-topic react-hook \
-  --add-topic undo \
-  --add-topic redo \
-  --add-topic history \
-  --add-topic state-management \
-  --add-topic typescript \
-  --add-topic react19
-```
-
----
-
 ## License
 
-[MIT](./LICENSE) © [sujalxplores](https://github.com/sujalxplores)
+[MIT](./LICENSE) © [sujalxplores](https://github.com/SujalXplores)

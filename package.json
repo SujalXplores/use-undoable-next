@@ -5,7 +5,7 @@
   "private": false,
   "author": "sujalxplores <shahc9437@gmail.com>",
   "license": "MIT",
-  "repository": "https://github.com/sujalxplores/useUndoable",
+  "repository": "https://github.com/SujalXplores/use-undoable-next",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
