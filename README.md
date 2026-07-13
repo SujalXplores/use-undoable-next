@@ -69,32 +69,6 @@ Benchmark: 50,000 iterations, each performing **50 updates + 25 undos + 25 redos
 The API is **100% compatible** — only the package name changes. No code logic
 changes required.
 
-### `package.json`
-
-```diff
-  "dependencies": {
--   "use-undoable": "^5.0.0",
-+   "use-undoable-next": "^5.1.3",
-  }
-```
-
-### Install
-
-```diff
-- npm install use-undoable
-+ npm install use-undoable-next
-```
-
-```diff
-- yarn add use-undoable
-+ yarn add use-undoable-next
-```
-
-```diff
-- pnpm add use-undoable
-+ pnpm add use-undoable-next
-```
-
 ### Imports
 
 ```diff
