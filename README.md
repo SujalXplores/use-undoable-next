@@ -7,9 +7,9 @@
 [![npm version](https://img.shields.io/npm/v/use-undoable-next.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/use-undoable-next)
 [![npm downloads](https://img.shields.io/npm/dm/use-undoable-next.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/use-undoable-next)
 [![license](https://img.shields.io/npm/l/use-undoable-next.svg?style=flat-square&color=blue)](./LICENSE)
-[![react](https://img.shields.io/npm/peerdependency/react/use-undoable-next.svg?style=flat-square&label=react)](https://react.dev)
+[![react peer dep](https://img.shields.io/badge/react-%3E%3D17.0.0-blue?style=flat-square)](https://react.dev)
 [![types](https://img.shields.io/npm/types/use-undoable-next.svg?style=flat-square&label=types)](https://www.typescriptlang.org)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/use-undoable-next?style=flat-square&label=size)](https://bundlephobia.com/package/use-undoable-next)
+[![bundle size](https://img.shields.io/badge/minzip-~1kB-brightgreen?style=flat-square)](https://bundlephobia.com/package/use-undoable-next)
 
 A React hook that adds undo/redo functionality to `useState` with a familiar API,
 customizable mutation behaviors, and zero dependencies.
