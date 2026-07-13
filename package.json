@@ -1,6 +1,6 @@
 {
   "name": "use-undoable-next",
-  "version": "5.1.2",
+  "version": "5.1.3",
   "description": "React hook for undo/redo functionality with customizable mutation behaviors and zero dependencies.",
   "private": false,
   "author": "sujalxplores <shahc9437@gmail.com>",

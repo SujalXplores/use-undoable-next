@@ -34,6 +34,97 @@ customizable mutation behaviors, and zero dependencies.
 
 ---
 
+## Benchmark vs `use-undoable`
+
+`use-undoable-next` is a modernized fork of [`use-undoable`](https://www.npmjs.com/package/use-undoable)
+with a smaller footprint and faster reducer logic.
+
+### Bundle size
+
+| Metric | `use-undoable` 5.0.0 | `use-undoable-next` 5.1.2 | Improvement |
+|--------|---------------------|---------------------------|-------------|
+| ESM bundle | 6.86 KB | 5.49 KB | **20% smaller** |
+| CJS bundle | 6.88 KB | 6.50 KB | **5% smaller** |
+| npm tarball | 14.96 KB | 11.89 KB | **21% smaller** |
+| Unpacked size | 66.59 KB (13 files) | ~28 KB (9 files) | **58% smaller** |
+| Runtime deps | 0 | 0 | — |
+
+### Reducer speed
+
+Benchmark: 50,000 iterations, each performing **50 updates + 25 undos + 25 redos**
+(100 ops/iteration = 5M total ops). Measured on Node 26, Windows.
+
+| Package | Total time | Per op | Ops/sec | Relative |
+|---------|-----------|--------|---------|----------|
+| `use-undoable` 5.0.0 | ~1,447 ms | 0.029 ms | ~34,700 | 1.00x (baseline) |
+| `use-undoable-next` 5.1.2 | ~781 ms | 0.016 ms | ~64,300 | **1.85x faster** |
+
+> The speedup comes from leaner reducer logic (arrow functions, modern spread
+> syntax, fewer intermediate variables) and a streamlined `mutate` path.
+
+---
+
+## Migrating from `use-undoable`
+
+The API is **100% compatible** — only the package name changes. No code logic
+changes required.
+
+### `package.json`
+
+```diff
+  "dependencies": {
+-   "use-undoable": "^5.0.0",
++   "use-undoable-next": "^5.1.3",
+  }
+```
+
+### Install
+
+```diff
+- npm install use-undoable
++ npm install use-undoable-next
+```
+
+```diff
+- yarn add use-undoable
++ yarn add use-undoable-next
+```
+
+```diff
+- pnpm add use-undoable
++ pnpm add use-undoable-next
+```
+
+### Imports
+
+```diff
+- import useUndoable from "use-undoable";
++ import useUndoable from "use-undoable-next";
+```
+
+### Type imports (if used)
+
+```diff
+- import type { Options, MutationBehavior } from "use-undoable";
++ import type { Options, MutationBehavior } from "use-undoable-next";
+```
+
+### Everything else stays the same
+
+The hook signature, return tuple, options, behaviors, and helpers are identical:
+
+```tsx
+// ✅ No changes needed — this works as-is
+const [state, setState, { undo, redo, canUndo, canRedo, reset, past, future }] =
+  useUndoable(initialState, {
+    behavior: "mergePastReversed",
+    historyLimit: 100,
+    ignoreIdenticalMutations: true,
+  });
+```
+
+---
+
 ## Installation
 
 ```bash
